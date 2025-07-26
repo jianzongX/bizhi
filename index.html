@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>右侧紧凑仪表盘</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            min-height: 100vh;
+            color: white;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 背景层设置80%透明度 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://youke1.picui.cn/s1/2025/07/26/688471c156860.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 0.8; /* 80%透明度 */
+            z-index: -1;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+        }
+        
+        .calendar-day {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: default;
+            font-size: 0.8rem;
+        }
+        
+        .today {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+        }
+        
+        .fortune-stars {
+            color: #FFD700;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+        }
+        
+        .quote-icon {
+            font-size: 1.5rem;
+            opacity: 0.6;
+            margin-bottom: 8px;
+        }
+        
+        .dashboard-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        /* 紧凑日历样式 */
+        .compact-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        
+        .weekday-header {
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 4px 0;
+            opacity: 0.8;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .animate-card {
+            animation: fadeInRight 0.5s ease-out forwards;
+        }
+        
+        .delay-100 {
+            animation-delay: 0.1s;
+        }
+        
+        .delay-200 {
+            animation-delay: 0.2s;
+        }
+        
+        .delay-300 {
+            animation-delay: 0.3s;
+        }
+        
+        /* 粒子背景 */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* 时间显示样式 */
+        .time-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 70px;
+        }
+        
+        #time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 400px) {
+            .dashboard-container {
+                width: 300px;
+                right: 10px;
+            }
+            
+            #time {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particles-container"></div>
+    
+    <!-- 右侧仪表盘容器 -->
+    <div class="dashboard-container">
+        <!-- 时间显示 -->
+        <div class="glass-card animate-card time-display">
+            <div id="time" class="text-2xl font-bold"></div>
+        </div>
+        
+        <!-- 一言区域 -->
+        <div class="glass-card animate-card delay-100">
+            <div class="flex items-start">
+                <i class="fas fa-quote-left quote-icon mr-2"></i>
+                <div>
+                    <div id="hitokoto" class="text-base italic">
+                        正在加载智慧之言...
+                    </div>
+                    <div id="hitokoto-from" class="mt-2 text-xs opacity-70"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 日历区域 -->
+        <div class="glass-card animate-card delay-200">
+            <h2 class="text-lg font-bold mb-3 flex items-center">
+                <i class="fas fa-calendar-alt mr-2"></i>日历
+            </h2>
+            <div id="calendar" class="text-center">
+                <div class="text-sm font-bold mb-2" id="calendar-header"></div>
+                <div class="grid grid-cols-7 mb-1">
+                    <div class="weekday-header">日</div>
+                    <div class="weekday-header">一</div>
+                    <div class="weekday-header">二</div>
+                    <div class="weekday-header">三</div>
+                    <div class="weekday-header">四</div>
+                    <div class="weekday-header">五</div>
+                    <div class="weekday-header">六</div>
+                </div>
+                <div id="calendar-days" class="compact-calendar"></div>
+            </div>
+        </div>
+        
+        <!-- 今日运势区域 -->
+        <div class="glass-card animate-card delay-300">
+            <h2 class="text-lg font-bold mb-3 flex items-center">
+                <i class="fas fa-star mr-2"></i>今日运势
+            </h2>
+            <div class="flex items-center">
+                <div class="mr-4">
+                    <div class="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-yellow-400/30 to-amber-600/30">
+                        <i class="fas fa-star text-2xl fortune-stars"></i>
+                    </div>
+                </div>
+                <div>
+                    <div id="fortune-title" class="text-xl font-bold">吉</div>
+                    <div id="fortune-desc" class="text-sm mt-1">今天会是顺利的一天</div>
+                    <div class="flex items-center mt-2 text-xs">
+                        <i class="fas fa-palette mr-1"></i>
+                        <span>幸运色: <span id="fortune-color" class="font-bold">金色</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 更新时间 - 只显示时间
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', {
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+            
+            document.getElementById('time').textContent = timeStr;
+        }
+        
+        // 获取一言
+        async function fetchHitokoto() {
+            try {
+                const response = await fetch('https://v1.hitokoto.cn/');
+                const data = await response.json();
+                
+                document.getElementById('hitokoto').textContent = data.hitokoto;
+                document.getElementById('hitokoto-from').textContent = `—— ${data.from}${data.from_who ? ' · ' + data.from_who : ''}`;
+            } catch (error) {
+                document.getElementById('hitokoto').textContent = "活在当下，珍惜此刻";
+                document.getElementById('hitokoto-from').textContent = "—— 智慧箴言";
+            }
+        }
+        
+        // 生成日历
+        function generateCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const today = now.getDate();
+            
+            // 获取当月第一天是星期几（0-6，0是周日）
+            const firstDay = new Date(year, month, 1).getDay();
+            // 获取当月有多少天
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", 
+                               "七月", "八月", "九月", "十月", "十一月", "十二月"];
+            
+            // 更新日历标题
+            document.getElementById('calendar-header').textContent = `${year}年 ${monthNames[month]}`;
+            
+            let calendarHTML = '';
+            
+            // 添加空白（第一天之前的日期）
+            for (let i = 0; i < firstDay; i++) {
+                calendarHTML += `<div class="calendar-day opacity-30"></div>`;
+            }
+            
+            // 添加日期
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isToday = day === today;
+                calendarHTML += `
+                    <div class="calendar-day ${isToday ? 'today' : ''}">
+                        ${day}
+                    </div>
+                `;
+            }
+            
+            document.getElementById('calendar-days').innerHTML = calendarHTML;
+        }
+        
+        // 生成今日运势
+        function generateFortune() {
+            const fortunes = [
+                { 
+                    title: "大吉", 
+                    desc: "今天会有意外惊喜，宜尝试新事物", 
+                    color: "金色" 
+                },
+                { 
+                    title: "中吉", 
+                    desc: "努力会有回报，保持积极心态", 
+                    color: "蓝色" 
+                },
+                { 
+                    title: "小吉", 
+                    desc: "平平淡淡才是真，享受当下", 
+                    color: "绿色" 
+                },
+                { 
+                    title: "末吉", 
+                    desc: "小心谨慎，避免重大决策", 
+                    color: "紫色" 
+                },
+                { 
+                    title: "凶", 
+                    desc: "注意健康安全，避免冒险", 
+                    color: "红色" 
+                }
+            ];
+            
+            // 随机选择一个运势（但大吉的概率较低）
+            const index = Math.random() > 0.85 ? 0 : 
+                         Math.random() > 0.65 ? 1 : 
+                         Math.random() > 0.45 ? 2 : 
+                         Math.random() > 0.25 ? 3 : 4;
+            
+            const fortune = fortunes[index];
+            
+            document.getElementById('fortune-title').textContent = fortune.title;
+            document.getElementById('fortune-desc').textContent = fortune.desc;
+            document.getElementById('fortune-color').textContent = fortune.color;
+            
+            // 更新星星图标
+            const stars = document.querySelector('.fortune-stars');
+            stars.className = 'fas ' + 
+                (index === 0 ? 'fa-star text-2xl' : 
+                 index === 1 ? 'fa-star-half-alt text-xl' : 
+                 index === 2 ? 'fa-star text-lg' : 
+                 index === 3 ? 'fa-star text-sm' : 'fa-star text-xs') + ' fortune-stars';
+        }
+        
+        // 创建粒子背景
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            const particleCount = 20;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // 随机属性
+                const size = Math.random() * 8 + 3;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const animationDuration = Math.random() * 20 + 10;
+                const opacity = Math.random() * 0.3 + 0.1;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                particle.style.animationDuration = `${animationDuration}s`;
+                particle.style.opacity = opacity;
+                particle.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+                
+                // 添加浮动动画
+                particle.style.animation = `float ${animationDuration}s infinite ease-in-out`;
+                
+                container.appendChild(particle);
+            }
+            
+            // 添加浮动动画关键帧
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes float {
+                    0%, 100% { transform: translate(0, 0); }
+                    25% { transform: translate(${Math.random()*10-5}px, ${Math.random()*10-5}px); }
+                    50% { transform: translate(${Math.random()*15-7.5}px, ${Math.random()*15-7.5}px); }
+                    75% { transform: translate(${Math.random()*10-5}px, ${Math.random()*10-5}px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // 页面加载完成后初始化
+        window.onload = function() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            fetchHitokoto();
+            generateCalendar();
+            generateFortune();
+            
+            createParticles();
+        };
+    </script>
+</body>
+</html>
