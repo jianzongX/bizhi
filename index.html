@@ -21,6 +21,17 @@
             color: white;
             position: relative;
             overflow-x: hidden;
+            /* 隐藏滚动条 */
+            overflow-y: scroll; /* 确保滚动功能仍然可用 */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        /* 隐藏Chrome、Safari和Opera的滚动条 */
+        body::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
         }
         
         /* 背景层设置80%透明度 */
@@ -86,10 +97,10 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            width: 340px; /* 稍微加宽以适应更大的图标 */
+            width: 340px;
             display: flex;
             flex-direction: column;
-            gap: 18px; /* 增加间距 */
+            gap: 18px;
             z-index: 100;
         }
         
@@ -101,7 +112,7 @@
         }
         
         .weekday-header {
-            font-size: 0.8rem; /* 放大日历星期文字 */
+            font-size: 0.8rem;
             text-align: center;
             padding: 4px 0;
             opacity: 0.8;
@@ -143,13 +154,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 85px; /* 增加高度以容纳更大的时间显示 */
+            min-height: 85px;
         }
         
         #time {
-            font-size: 3.2rem; /* 放大时间字体 */
+            font-size: 3.2rem;
             font-weight: 700;
-            letter-spacing: 2px; /* 增加字母间距 */
+            letter-spacing: 2px;
             display: flex;
             align-items: center;
         }
@@ -166,16 +177,16 @@
         
         /* 图标放大 */
         .card-icon {
-            font-size: 1.4rem; /* 放大卡片图标 */
+            font-size: 1.4rem;
             margin-right: 10px;
         }
         
         .card-title {
-            font-size: 1.3rem; /* 放大卡片标题 */
+            font-size: 1.3rem;
         }
         
         .fortune-icon {
-            font-size: 2.5rem !important; /* 放大运势图标 */
+            font-size: 2.5rem !important;
         }
         
         /* 一言区域样式 */
